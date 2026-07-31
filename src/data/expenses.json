@@ -1,1 +1,16 @@
-[]
+[
+  {
+    "id": "7e94d3af-71dc-4645-b327-59128b942990",
+    "title": "Pizza",
+    "amount": 350,
+    "category": "Food",
+    "date": "2026-07-31"
+  },
+  {
+    "id": "63d0f984-0ffd-4151-afb4-aa60427c0490",
+    "title": "Laptop",
+    "amount": 65000,
+    "category": "Electronics",
+    "date": "2026-08-01"
+  }
+]
