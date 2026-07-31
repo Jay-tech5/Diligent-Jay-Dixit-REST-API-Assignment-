@@ -7,6 +7,22 @@ const app = express();
 app.use(express.json());
 
 
+// Root endpoint
+app.get('/', (req, res) => {
+  res.status(200).json({
+    status: 'success',
+    message: 'Welcome to Expense REST API',
+    endpoints: {
+      getExpenses: 'GET /expenses',
+      filterExpenses: 'GET /expenses?category=Food',
+      createExpense: 'POST /expenses',
+      getTotalExpenses: 'GET /expenses/total',
+      getTotalByCategory: 'GET /expenses/total/category',
+      deleteExpense: 'DELETE /expenses/:id'
+    }
+  });
+});
+
 app.use('/expenses', expenseRoutes);
 
 app.use((req, res, next) => {
