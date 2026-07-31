@@ -5,10 +5,23 @@ const { v4: uuidv4 } = require('uuid');
 const dataFilePath = path.join(__dirname, '../data/expenses.json');
 
 /**
+ * Ensures data directory exists
+ */
+async function ensureDirectoryExists() {
+  const dir = path.dirname(dataFilePath);
+  try {
+    await fs.mkdir(dir, { recursive: true });
+  } catch (err) {
+    // Ignore error if directory already exists
+  }
+}
+
+/**
  * Reads expenses from src/data/expenses.json
  * @returns {Promise<Array>} 
  */
 async function readAll() {
+  await ensureDirectoryExists();
   try {
     const data = await fs.readFile(dataFilePath, 'utf8');
     if (!data.trim()) {
@@ -16,7 +29,7 @@ async function readAll() {
     }
     return JSON.parse(data);
   } catch (error) {
-    if (error.code === 'ENOENT') {
+    if (error.code === 'ENOENT' || error instanceof SyntaxError) {
       await writeAll([]);
       return [];
     }
@@ -30,6 +43,7 @@ async function readAll() {
  * @returns {Promise<void>}
  */
 async function writeAll(expenses) {
+  await ensureDirectoryExists();
   await fs.writeFile(dataFilePath, JSON.stringify(expenses, null, 2), 'utf8');
 }
 
@@ -42,7 +56,7 @@ async function getAll(category) {
   const expenses = await readAll();
   if (category) {
     return expenses.filter(
-      (exp) => exp.category.toLowerCase() === category.toLowerCase()
+      (exp) => exp.category && exp.category.toLowerCase() === category.toLowerCase()
     );
   }
   return expenses;
@@ -59,7 +73,7 @@ async function create({ title, amount, category, date }) {
   const newExpense = {
     id: uuidv4(),
     title: title.trim(),
-    amount: Number(amount),
+    amount: Math.round(Number(amount) * 100) / 100,
     category: category.trim(),
     date: date.trim()
   };
@@ -75,7 +89,8 @@ async function create({ title, amount, category, date }) {
  */
 async function getTotal() {
   const expenses = await readAll();
-  const total = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+  const totalRaw = expenses.reduce((sum, exp) => sum + Number(exp.amount || 0), 0);
+  const total = Math.round(totalRaw * 100) / 100;
   return { total };
 }
 
@@ -89,7 +104,10 @@ async function getTotalByCategory() {
 
   expenses.forEach((exp) => {
     const cat = exp.category;
-    totals[cat] = (totals[cat] || 0) + exp.amount;
+    if (cat) {
+      const current = totals[cat] || 0;
+      totals[cat] = Math.round((current + Number(exp.amount || 0)) * 100) / 100;
+    }
   });
 
   return totals;

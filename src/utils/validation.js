@@ -4,19 +4,27 @@
  * @returns {{ isValid: boolean, errors: Array<string> }}
  */
 function validateExpensePayload(body) {
-  const { title, amount, category, date } = body || {};
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    return {
+      isValid: false,
+      errors: ['Request body must be a valid JSON object']
+    };
+  }
+
+  const { title, amount, category, date } = body;
   const errors = [];
 
   if (!title || typeof title !== 'string' || title.trim() === '') {
     errors.push('title is required and must be a non-empty string');
   }
 
+  const numAmount = Number(amount);
   if (
     amount === undefined ||
     amount === null ||
-    typeof amount !== 'number' ||
-    isNaN(amount) ||
-    amount <= 0
+    typeof amount === 'boolean' ||
+    isNaN(numAmount) ||
+    numAmount <= 0
   ) {
     errors.push('amount is required and must be a positive number');
   }
