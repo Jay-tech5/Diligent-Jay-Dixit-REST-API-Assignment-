@@ -6,6 +6,6 @@ router.post('/',expenseController.createExpense);
 router.get('/',expenseController.getExpenses);
 router.get('/total',expenseController.getTotalExpenses);
 router.get('/total/category',expenseController.getTotalByCategory);
-router.delete('/:id',expenseController,expenseController.removeExpense);
+router.delete('/:id', expenseController.removeExpense);
 module.exports=router;
 

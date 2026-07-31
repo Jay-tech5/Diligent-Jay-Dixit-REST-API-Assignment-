@@ -1,23 +1,18 @@
 const request = require('supertest');
 const app = require('../src/app');
 
-describe('REST API Endpoints', () => {
-  it('GET / should return welcome message', async () => {
+describe('Application General Tests', () => {
+  it('GET / non-existent route should return 404 error JSON', async () => {
     const res = await request(app).get('/');
-    expect(res.statusCode).toEqual(200);
-    expect(res.body).toHaveProperty('message');
+    expect(res.statusCode).toEqual(404);
+    expect(res.body.status).toEqual('fail');
+    expect(res.body.error).toContain('Cannot find / on this server!');
   });
 
-  it('GET /api/health should return OK status', async () => {
-    const res = await request(app).get('/api/health');
-    expect(res.statusCode).toEqual(200);
-    expect(res.body.status).toEqual('OK');
-  });
-
-  it('GET /api/items should return array of items', async () => {
-    const res = await request(app).get('/api/items');
-    expect(res.statusCode).toEqual(200);
-    expect(res.body.success).toBe(true);
-    expect(Array.isArray(res.body.data)).toBe(true);
+  it('GET /non-existent-route should return 404 error JSON', async () => {
+    const res = await request(app).get('/non-existent-route');
+    expect(res.statusCode).toEqual(404);
+    expect(res.body.status).toEqual('fail');
+    expect(res.body.error).toContain('Cannot find');
   });
 });

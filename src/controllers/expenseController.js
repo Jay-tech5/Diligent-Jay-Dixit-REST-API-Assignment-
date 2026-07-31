@@ -57,7 +57,7 @@ async function getTotalByCategory(req, res, next) {
   } catch (error) {
     next(error);
   }
-}l
+}
 /**
  * Delete expense by ID
  */
