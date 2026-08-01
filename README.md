@@ -1,123 +1,140 @@
-# Diligent REST API Assignment - Expense Tracker API
+# Diligent REST API Assignment – Expense Tracker API
 
-A modular, production-ready REST API built with **Node.js** and **Express**. It provides complete expense management (CRUD operations), expense category filtering, analytics aggregations, atomic file-based JSON persistence, and full test data isolation.
+## Overview
 
----
+This project is a RESTful Expense Tracker API built with **Node.js** and **Express.js**.
+It allows users to add, view, update, and delete expenses. Users can also filter expenses by category and view expense totals.
+Expense data is stored in a local JSON file, and automated tests are included to verify the API.
 
-## 🚀 Installed Packages & Dependencies
+## Technologies & Packages Used
 
-### **Core Dependencies** (`dependencies`)
-| Package | Version | Purpose |
-| :--- | :--- | :--- |
-| [`express`](https://www.npmjs.com/package/express) | `^4.19.2` | Fast, unopinionated web framework for Node.js REST API routing and middleware. |
-| [`cors`](https://www.npmjs.com/package/cors) | `^2.8.5` | Enables Cross-Origin Resource Sharing (CORS) for browser clients. |
-| [`dotenv`](https://www.npmjs.com/package/dotenv) | `^16.4.5` | Loads environment variables from `.env` into `process.env`. |
-| [`uuid`](https://www.npmjs.com/package/uuid) | `^9.0.1` | Generates cryptographically strong unique identifiers (UUID v4) for expense records. |
+### Production Dependencies
 
-### **Development & Testing Dependencies** (`devDependencies`)
-| Package | Version | Purpose |
-| :--- | :--- | :--- |
-| [`jest`](https://www.npmjs.com/package/jest) | `^29.7.0` | Comprehensive JavaScript testing framework for running unit and integration test suites. |
-| [`supertest`](https://www.npmjs.com/package/supertest) | `^6.3.4` | High-level HTTP assertion library for testing Express endpoints. |
-| [`nodemon`](https://www.npmjs.com/package/nodemon) | `^3.1.0` | Development utility that automatically restarts the Node server when code changes. |
+- express - Used to build the REST API and handle routing and middleware.
+- cors - Allows requests from different origins, making it easier to connect frontend applications.
+- dotenv - Loads environment variables from a .env file.
+- uuid - Generates unique IDs for every expense record.
 
----
 
-## ✨ Features
+## Development Dependencies
+- jest – Runs automated tests.
+- supertest – Tests API endpoints.
+- nodemon – Restarts the server automatically during development.
 
-- **Full CRUD Operations**: Create, Read, Update (`PUT`/`PATCH`), and Delete (`DELETE`) expense items.
-- **Filtering & Aggregation**: Filter by category (`GET /expenses?category=Food`), calculate total sum (`GET /expenses/total`), and aggregate totals by category (`GET /expenses/total/category`).
-- **Atomic File Writes**: Prevents JSON data corruption by writing to temporary `.tmp` files before renaming atomically.
-- **Concurrency Locking**: Queues state mutations sequentially (`enqueueOperation`) to prevent race conditions under simultaneous HTTP calls.
-- **Automated Test Isolation**: Test suite automatically redirects storage to `expenses.test.json`, preserving your main data in `src/data/expenses.json`.
-- **Flexible Schema Validation**: Validates inputs; `date` is optional and defaults to today's date (`YYYY-MM-DD`).
+## Features
 
----
+- Add a new expense
+- View all expenses
+- View an expense by ID
+- Update an existing expense
+- Delete an expense
+- Filter expenses by category
+- Calculate the total expense amount
+- View total expenses by category
+- Store data in a local JSON file
+- Automated API testing
 
-## 📡 API Endpoints
+## API Endpoints
 
-| HTTP Method | Endpoint | Description | Request Body Example |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/` | API status and endpoint directory | *None* |
-| `GET` | `/expenses` | Retrieve all expenses | *None* |
-| `GET` | `/expenses?category=Food` | Filter expenses by category (case-insensitive) | *None* |
-| `GET` | `/expenses/:id` | Get details of a single expense by ID | *None* |
-| `POST` | `/expenses` | Create a new expense | `{ "title": "Coffee", "amount": 350, "category": "Food" }` |
-| `PUT` / `PATCH` | `/expenses/:id` | Update an existing expense record | `{ "amount": 400, "title": "Cold Coffee" }` |
-| `DELETE` | `/expenses/:id` | Delete expense record by ID | *None* |
-| `GET` | `/expenses/total` | Get sum total of all expenses | *None* |
-| `GET` | `/expenses/total/category` | Get expense totals grouped by category | *None* |
+| Method | Endpoint                   | Description                             |
+| ------ | -------------------------- | --------------------------------------- |
+| GET    | `/`                        | Shows API information.                  |
+| GET    | `/expenses`                | Gets all expenses.                      |
+| GET    | `/expenses?category=Food`  | Gets expenses by category.              |
+| GET    | `/expenses/:id`            | Gets an expense by ID.                  |
+| POST   | `/expenses`                | Adds a new expense.                     |
+| PUT    | `/expenses/:id`            | Updates an existing expense.            |
+| PATCH  | `/expenses/:id`            | Updates selected fields of an expense.  |
+| DELETE | `/expenses/:id`            | Deletes an expense.                     |
+| GET    | `/expenses/total`          | Shows the total expense amount.         |
+| GET    | `/expenses/total/category` | Shows total expenses for each category. |
 
----
 
-## 💡 Quick Start & Usage Examples
+## Sample Requests
 
-### Create Expense (`POST /expenses`)
-```bash
-curl -X POST http://localhost:3000/expenses \
-  -H "Content-Type: application/json" \
-  -d '{"title": "Groceries", "amount": 2500, "category": "Food"}'
+### Create Expense
+
+```json
+POST /expenses
+
+{
+  "title": "Groceries",
+  "amount": 2500,
+  "category": "Food"
+}
 ```
 
-### Update Expense (`PATCH /expenses/:id`)
-```bash
-curl -X PATCH http://localhost:3000/expenses/<EXPENSE_ID> \
-  -H "Content-Type: application/json" \
-  -d '{"amount": 2800}'
+### Update Expense
+
+```json
+PATCH /expenses/:id
+
+{
+  "amount": 2800
+}
 ```
 
-### Get Category Totals (`GET /expenses/total/category`)
-```bash
-curl http://localhost:3000/expenses/total/category
+### Get Category Totals
+
+```http
+GET /expenses/total/category
 ```
 
----
 
-## 📁 Project Structure
+  ## Project Structure
 
-```
-├── src/
-│   ├── controllers/    # Request handlers & response formatting (expenseController.js)
-│   ├── data/           # JSON data storage (expenses.json)
-│   ├── models/         # Business logic & atomic persistence queue (expenseModel.js)
-│   ├── routes/         # Express endpoint definitions (expenseRoutes.js)
-│   ├── utils/          # Schema & payload validation helpers (validation.js)
-│   ├── app.js          # Express app config & middleware setup
-│   └── server.js       # HTTP server launcher
-├── tests/              # Automated unit & integration test suites
-│   ├── app.test.js
-│   ├── expense.test.js
-│   └── expenseModel.test.js
-├── .gitignore
-├── AI_NOTES.md
-├── package.json
-└── README.md
-```
+src/
+├── controllers/
+│   └── expenseController.js
+├── data/
+│   └── expenses.json
+├── models/
+│   └── expenseModel.js
+├── routes/
+│   └── expenseRoutes.js
+├── utils/
+│   └── validation.js
+├── app.js
+└── server.js
 
----
+tests/
+├── app.test.js
+├── expense.test.js
+└── expenseModel.test.js
 
-## 🛠️ Installation & Execution
+.gitignore
+AI_NOTES.md
+package.json
+README.md
 
-### 1. Installation
+## Installation
+
+Install the project dependencies:
+
 ```bash
 npm install
 ```
 
-### 2. Running the Application
-- **Development Mode** (with auto-reload):
-  ```bash
-  npm run dev
-  ```
-- **Production Mode**:
-  ```bash
-  npm start
-  ```
+---
 
-### 3. Running Automated Tests
+## Run the Application
+
+Development mode:
+
+```bash
+npm run dev
+```
+
+Production mode:
+
+```bash
+npm start
+```
+
+---
+
+## Run Tests
+
 ```bash
 npm test
-```
-*For detailed test breakdown:*
-```bash
-npx jest --verbose
 ```
