@@ -2,32 +2,40 @@ const fs = require('fs').promises;
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 
-const dataFilePath = path.join(__dirname, '../data/expenses.json');
-
-/**
- * Ensures data directory exists
- */
-async function ensureDirectoryExists() {
-  const dir = path.dirname(dataFilePath);
-  try {
-    await fs.mkdir(dir, { recursive: true });
-  } catch (err) {
-    // Ignore error if directory already exists
+function getDataFilePath() {
+  if (process.env.STORAGE_FILE) {
+    return process.env.STORAGE_FILE;
   }
+  if (process.env.NODE_ENV === 'test') {
+    return path.join(__dirname, '../data/expenses.test.json');
+  }
+  return path.join(__dirname, '../data/expenses.json');
 }
 
-/**
- * Reads expenses from src/data/expenses.json
- * @returns {Promise<Array>} 
- */
-async function readAll() {
-  await ensureDirectoryExists();
+async function ensureDirectoryExists(filePath = getDataFilePath()) {
+  const dir = path.dirname(filePath);
   try {
-    const data = await fs.readFile(dataFilePath, 'utf8');
+    await fs.mkdir(dir, { recursive: true });
+  } catch (err) {}
+}
+
+let writeQueue = Promise.resolve();
+
+function enqueueOperation(taskFn) {
+  writeQueue = writeQueue.then(taskFn, taskFn);
+  return writeQueue;
+}
+
+async function readAll() {
+  const filePath = getDataFilePath();
+  await ensureDirectoryExists(filePath);
+  try {
+    const data = await fs.readFile(filePath, 'utf8');
     if (!data.trim()) {
       return [];
     }
-    return JSON.parse(data);
+    const parsed = JSON.parse(data);
+    return Array.isArray(parsed) ? parsed : [];
   } catch (error) {
     if (error.code === 'ENOENT' || error instanceof SyntaxError) {
       await writeAll([]);
@@ -37,56 +45,50 @@ async function readAll() {
   }
 }
 
-/**
- * Writes expenses array to src/data/expenses.json
- * @param {Array} expenses 
- * @returns {Promise<void>}
- */
 async function writeAll(expenses) {
-  await ensureDirectoryExists();
-  await fs.writeFile(dataFilePath, JSON.stringify(expenses, null, 2), 'utf8');
+  const filePath = getDataFilePath();
+  await ensureDirectoryExists(filePath);
+  const tempPath = `${filePath}.${Date.now()}.${Math.random().toString(36).substring(2, 7)}.tmp`;
+  try {
+    await fs.writeFile(tempPath, JSON.stringify(expenses, null, 2), 'utf8');
+    await fs.rename(tempPath, filePath);
+  } catch (err) {
+    try {
+      await fs.unlink(tempPath);
+    } catch (_) {}
+    throw err;
+  }
 }
 
-/**
- * Fetch all expenses, optionally filtered by category
- * @param {string} [category] 
- * @returns {Promise<Array>}
- */
 async function getAll(category) {
   const expenses = await readAll();
   if (category) {
+    const targetCategory = category.trim().toLowerCase();
     return expenses.filter(
-      (exp) => exp.category && exp.category.toLowerCase() === category.toLowerCase()
+      (exp) => exp.category && exp.category.trim().toLowerCase() === targetCategory
     );
   }
   return expenses;
 }
 
-/**
- * Create and persist a new expense
- * @param {Object} expensePayload 
- * @returns {Promise<Object>}
- */
 async function create({ title, amount, category, date }) {
-  const expenses = await readAll();
+  return enqueueOperation(async () => {
+    const expenses = await readAll();
 
-  const newExpense = {
-    id: uuidv4(),
-    title: title.trim(),
-    amount: Math.round(Number(amount) * 100) / 100,
-    category: category.trim(),
-    date: date.trim()
-  };
+    const newExpense = {
+      id: uuidv4(),
+      title: title.trim(),
+      amount: Math.round(Number(amount) * 100) / 100,
+      category: category.trim(),
+      date: (date && typeof date === 'string' && date.trim()) ? date.trim() : new Date().toISOString().split('T')[0]
+    };
 
-  expenses.push(newExpense);
-  await writeAll(expenses);
-  return newExpense;
+    expenses.push(newExpense);
+    await writeAll(expenses);
+    return newExpense;
+  });
 }
 
-/**
- * Calculate total expenses amount
- * @returns {Promise<Object>} Object containing total sum
- */
 async function getTotal() {
   const expenses = await readAll();
   const totalRaw = expenses.reduce((sum, exp) => sum + Number(exp.amount || 0), 0);
@@ -94,16 +96,12 @@ async function getTotal() {
   return { total };
 }
 
-/**
- * Group expense totals by category
- * @returns {Promise<Object>}
- */
 async function getTotalByCategory() {
   const expenses = await readAll();
   const totals = {};
 
   expenses.forEach((exp) => {
-    const cat = exp.category;
+    const cat = exp.category ? exp.category.trim() : null;
     if (cat) {
       const current = totals[cat] || 0;
       totals[cat] = Math.round((current + Number(exp.amount || 0)) * 100) / 100;
@@ -113,30 +111,63 @@ async function getTotalByCategory() {
   return totals;
 }
 
-/**
- * Delete expense by ID
- * @param {string} id 
- * @returns {Promise<boolean>} 
- */
 async function deleteById(id) {
+  return enqueueOperation(async () => {
+    const expenses = await readAll();
+    const index = expenses.findIndex((exp) => exp.id === id);
+
+    if (index === -1) {
+      return false;
+    }
+
+    expenses.splice(index, 1);
+    await writeAll(expenses);
+    return true;
+  });
+}
+
+async function getById(id) {
   const expenses = await readAll();
-  const index = expenses.findIndex((exp) => exp.id === id);
+  const found = expenses.find((exp) => exp.id === id);
+  return found || null;
+}
 
-  if (index === -1) {
-    return false;
-  }
+async function updateById(id, updatePayload) {
+  return enqueueOperation(async () => {
+    const expenses = await readAll();
+    const index = expenses.findIndex((exp) => exp.id === id);
 
-  expenses.splice(index, 1);
-  await writeAll(expenses);
-  return true;
+    if (index === -1) {
+      return null;
+    }
+
+    const current = expenses[index];
+    const updated = {
+      ...current,
+      title: updatePayload.title !== undefined ? updatePayload.title.trim() : current.title,
+      amount: updatePayload.amount !== undefined ? Math.round(Number(updatePayload.amount) * 100) / 100 : current.amount,
+      category: updatePayload.category !== undefined ? updatePayload.category.trim() : current.category,
+      date: (updatePayload.date !== undefined && updatePayload.date !== null && updatePayload.date.trim() !== '') 
+        ? updatePayload.date.trim() 
+        : current.date
+    };
+
+    expenses[index] = updated;
+    await writeAll(expenses);
+    return updated;
+  });
 }
 
 module.exports = {
+  getDataFilePath,
   readAll,
   writeAll,
   getAll,
+  getById,
   create,
+  updateById,
   getTotal,
   getTotalByCategory,
   deleteById
 };
+

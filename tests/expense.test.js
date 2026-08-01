@@ -1,19 +1,21 @@
+process.env.NODE_ENV = 'test';
+
 const request = require('supertest');
 const app = require('../src/app');
+const expenseModel = require('../src/models/expenseModel');
 const fs = require('fs').promises;
-const path = require('path');
-
-const dataFilePath = path.join(__dirname, '../src/data/expenses.json');
 
 describe('Expense API Endpoints', () => {
   beforeEach(async () => {
-    // Reset test data
-    await fs.writeFile(dataFilePath, JSON.stringify([], null, 2), 'utf8');
+    // Reset test data in test isolated JSON file
+    await expenseModel.writeAll([]);
   });
 
   afterAll(async () => {
-    // Cleanup test data
-    await fs.writeFile(dataFilePath, JSON.stringify([], null, 2), 'utf8');
+    // Cleanup test file after tests complete
+    try {
+      await fs.unlink(expenseModel.getDataFilePath());
+    } catch (_) {}
   });
 
   it('POST /expenses should create a new expense', async () => {
@@ -76,6 +78,61 @@ describe('Expense API Endpoints', () => {
     const res = await request(app).get('/expenses/total/category');
     expect(res.statusCode).toBe(200);
     expect(typeof res.body).toBe('object');
+  });
+
+  it('GET /expenses/:id should return single expense by ID', async () => {
+    const created = await request(app).post('/expenses').send({
+      title: 'Headphones',
+      amount: 150,
+      category: 'Electronics',
+      date: '2026-08-01'
+    });
+
+    const res = await request(app).get(`/expenses/${created.body.id}`);
+    expect(res.statusCode).toBe(200);
+    expect(res.body.title).toBe('Headphones');
+  });
+
+  it('PUT/PATCH /expenses/:id should update existing expense record', async () => {
+    const created = await request(app).post('/expenses').send({
+      title: 'Coffee',
+      amount: 350,
+      category: 'Food',
+      date: '2026-08-01'
+    });
+
+    const patchRes = await request(app)
+      .patch(`/expenses/${created.body.id}`)
+      .send({ amount: 400, title: 'Espresso Coffee' });
+
+    expect(patchRes.statusCode).toBe(200);
+    expect(patchRes.body.amount).toBe(400);
+    expect(patchRes.body.title).toBe('Espresso Coffee');
+    expect(patchRes.body.category).toBe('Food');
+  });
+
+  it('POST /expenses should reject non-finite amounts like Infinity', async () => {
+    const invalidPayload = {
+      title: 'Expensive Item',
+      amount: 'Infinity',
+      category: 'Luxury'
+    };
+
+    const res = await request(app).post('/expenses').send(invalidPayload);
+    expect(res.statusCode).toBe(400);
+    expect(res.body.status).toBe('fail');
+  });
+
+  it('PATCH /expenses/:id should reject empty body payload', async () => {
+    const created = await request(app).post('/expenses').send({
+      title: 'Lunch',
+      amount: 20,
+      category: 'Food'
+    });
+
+    const res = await request(app).patch(`/expenses/${created.body.id}`).send({});
+    expect(res.statusCode).toBe(400);
+    expect(res.body.status).toBe('fail');
   });
 
   it('DELETE /expenses/:id should remove expense', async () => {

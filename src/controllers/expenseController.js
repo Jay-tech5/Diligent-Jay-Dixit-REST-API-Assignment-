@@ -1,9 +1,6 @@
 const expenseModel = require('../models/expenseModel');
-const { validateExpensePayload } = require('../utils/validation');
+const { validateExpensePayload, validateUpdatePayload } = require('../utils/validation');
 
-/**
- * Add a new expense
- */
 async function createExpense(req, res, next) {
   try {
     const { isValid, errors } = validateExpensePayload(req.body);
@@ -22,9 +19,6 @@ async function createExpense(req, res, next) {
   }
 }
 
-/**
- * View all expenses or filter by category
- */
 async function getExpenses(req, res, next) {
   try {
     const { category } = req.query;
@@ -35,9 +29,49 @@ async function getExpenses(req, res, next) {
   }
 }
 
-/**
- * Calculate total expense amount
- */
+async function getExpenseById(req, res, next) {
+  try {
+    const { id } = req.params;
+    const expense = await expenseModel.getById(id);
+
+    if (!expense) {
+      const err = new Error(`Expense with id '${id}' not found`);
+      err.statusCode = 404;
+      return next(err);
+    }
+
+    res.status(200).json(expense);
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function updateExpense(req, res, next) {
+  try {
+    const { id } = req.params;
+
+    const { isValid, errors } = validateUpdatePayload(req.body);
+    if (!isValid) {
+      const err = new Error(`Validation failed: ${errors.join('; ')}`);
+      err.statusCode = 400;
+      err.errors = errors;
+      return next(err);
+    }
+
+    const updatedExpense = await expenseModel.updateById(id, req.body);
+
+    if (!updatedExpense) {
+      const err = new Error(`Expense with id '${id}' not found`);
+      err.statusCode = 404;
+      return next(err);
+    }
+
+    res.status(200).json(updatedExpense);
+  } catch (error) {
+    next(error);
+  }
+}
+
 async function getTotalExpenses(req, res, next) {
   try {
     const total = await expenseModel.getTotal();
@@ -47,9 +81,6 @@ async function getTotalExpenses(req, res, next) {
   }
 }
 
-/**
- * Calculate total expenses by category
- */
 async function getTotalByCategory(req, res, next) {
   try {
     const totals = await expenseModel.getTotalByCategory();
@@ -58,9 +89,7 @@ async function getTotalByCategory(req, res, next) {
     next(error);
   }
 }
-/**
- * Delete expense by ID
- */
+
 async function removeExpense(req, res, next) {
   try {
     const { id } = req.params;
@@ -78,10 +107,12 @@ async function removeExpense(req, res, next) {
   }
 }
 
-module.exports={
-    createExpense,
-    getExpenses,
-    getTotalExpenses,
-    getTotalByCategory,
-    removeExpense
-}
+module.exports = {
+  createExpense,
+  getExpenses,
+  getExpenseById,
+  updateExpense,
+  getTotalExpenses,
+  getTotalByCategory,
+  removeExpense
+};
