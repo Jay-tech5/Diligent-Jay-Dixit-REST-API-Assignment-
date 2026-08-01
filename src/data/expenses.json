@@ -21,10 +21,31 @@
     "date": "2026-08-01"
   },
   {
-    "id": "ba41f88d-f243-4441-9614-aed7321c1ef1",
+    "id": "87738220-0258-4471-ba99-b6925e67631d",
+    "title": "Laptop",
+    "amount": 65000,
+    "category": "Electronics",
+    "date": "2026-08-01"
+  },
+  {
+    "id": "8ed9fe66-6185-4f05-97c8-bc97300f0c8c",
     "title": "Bus Ticket",
-    "amount": 120,
+    "amount": 400,
     "category": "Travel",
     "date": "2026-08-01"
+  },
+  {
+    "id": "8f2df18b-4a21-445c-9d31-a21c69baa2c7",
+    "title": "Petrol",
+    "amount": 1800,
+    "category": "Travel",
+    "date": "2026-08-01"
+  },
+  {
+    "id": "174c053c-99e4-4f06-b9e8-a1ed2cde9bee",
+    "title": "Groceries",
+    "amount": 1200,
+    "category": "Food",
+    "date": "2026-08-02"
   }
 ]
