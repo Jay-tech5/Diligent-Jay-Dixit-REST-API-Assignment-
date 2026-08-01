@@ -1,44 +1,30 @@
 [
   {
-    "id": "3cbcfce5-d12c-4b28-b1ff-b729e3d92678",
+    "id": "e089171a-f570-41e3-88bf-6b8b83018635",
     "title": "Laptop",
-    "amount": 65000,
+    "amount": 72000,
     "category": "Electronics",
     "date": "2026-08-01"
   },
   {
-    "id": "e1ad9cfc-ea78-4e16-a6e0-7d7856bf4707",
-    "title": "Laptop",
-    "amount": 65000,
-    "category": "Electronics",
-    "date": "2026-08-01"
-  },
-  {
-    "id": "3feb87d0-b405-4f6f-a243-2a04b5270c01",
-    "title": "Coffee",
-    "amount": 350,
-    "category": "Food",
-    "date": "2026-08-01"
-  },
-  {
-    "id": "41f30c3a-16a5-4c95-9aee-84aa512642ea",
-    "title": "Groceries",
-    "amount": 2200,
-    "category": "Food",
-    "date": "2026-08-01"
-  },
-  {
-    "id": "d889f0a4-f976-4cb2-b253-9a8415908413",
+    "id": "ddc2ec37-a5e8-4dcd-a638-d7ed70358fb3",
     "title": "Internet Bill",
     "amount": 999,
     "category": "Utilities",
     "date": "2026-08-01"
   },
   {
-    "id": "f424c898-c25c-4a35-9132-50620f9eec25",
+    "id": "3aa0bc2c-c6d8-4ae9-be41-69ab970cb9f6",
     "title": "Movie Ticket",
     "amount": 450,
     "category": "Entertainment",
+    "date": "2026-08-01"
+  },
+  {
+    "id": "ba41f88d-f243-4441-9614-aed7321c1ef1",
+    "title": "Bus Ticket",
+    "amount": 120,
+    "category": "Travel",
     "date": "2026-08-01"
   }
 ]

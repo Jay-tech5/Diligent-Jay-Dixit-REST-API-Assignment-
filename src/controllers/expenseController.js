@@ -50,7 +50,11 @@ async function updateExpense(req, res, next) {
   try {
     const { id } = req.params;
 
-    const { isValid, errors } = validateUpdatePayload(req.body);
+    const validationResult = req.method === 'PUT'
+      ? validateExpensePayload(req.body)
+      : validateUpdatePayload(req.body);
+
+    const { isValid, errors } = validationResult;
     if (!isValid) {
       const err = new Error(`Validation failed: ${errors.join('; ')}`);
       err.statusCode = 400;

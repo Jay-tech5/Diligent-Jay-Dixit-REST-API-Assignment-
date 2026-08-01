@@ -93,7 +93,7 @@ describe('Expense API Endpoints', () => {
     expect(res.body.title).toBe('Headphones');
   });
 
-  it('PUT/PATCH /expenses/:id should update existing expense record', async () => {
+  it('PATCH /expenses/:id should update selected fields of existing expense record', async () => {
     const created = await request(app).post('/expenses').send({
       title: 'Coffee',
       amount: 350,
@@ -109,6 +109,31 @@ describe('Expense API Endpoints', () => {
     expect(patchRes.body.amount).toBe(400);
     expect(patchRes.body.title).toBe('Espresso Coffee');
     expect(patchRes.body.category).toBe('Food');
+  });
+
+  it('PUT /expenses/:id should perform full replacement of existing expense record', async () => {
+    const created = await request(app).post('/expenses').send({
+      title: 'Tea',
+      amount: 50,
+      category: 'Drinks',
+      date: '2026-08-01'
+    });
+
+    const putRes = await request(app)
+      .put(`/expenses/${created.body.id}`)
+      .send({ title: 'Green Tea', amount: 80, category: 'Beverages', date: '2026-08-01' });
+
+    expect(putRes.statusCode).toBe(200);
+    expect(putRes.body.title).toBe('Green Tea');
+    expect(putRes.body.amount).toBe(80);
+    expect(putRes.body.category).toBe('Beverages');
+
+    const invalidPut = await request(app)
+      .put(`/expenses/${created.body.id}`)
+      .send({ amount: 100 }); // missing title & category
+
+    expect(invalidPut.statusCode).toBe(400);
+    expect(invalidPut.body.status).toBe('fail');
   });
 
   it('POST /expenses should reject non-finite amounts like Infinity', async () => {
@@ -153,5 +178,16 @@ describe('Expense API Endpoints', () => {
     const res = await request(app).delete('/expenses/non-existent-id');
     expect(res.statusCode).toBe(404);
     expect(res.body.status).toBe('fail');
+  });
+
+  it('GET /expenses?category=Food&category=Transport should handle repeated query params safely without 500 crash', async () => {
+    await request(app).post('/expenses').send({ title: 'Burger', amount: 10, category: 'Food' });
+    await request(app).post('/expenses').send({ title: 'Bus', amount: 5, category: 'Transport' });
+    await request(app).post('/expenses').send({ title: 'Book', amount: 15, category: 'Education' });
+
+    const res = await request(app).get('/expenses?category=Food&category=Transport');
+    expect(res.statusCode).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+    expect(res.body).toHaveLength(2);
   });
 });

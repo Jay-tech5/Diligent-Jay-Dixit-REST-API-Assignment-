@@ -4,8 +4,8 @@ const expenseController = require('../controllers/expenseController');
 
 router.post('/', expenseController.createExpense);
 router.get('/', expenseController.getExpenses);
-router.get('/total', expenseController.getTotalExpenses);
 router.get('/total/category', expenseController.getTotalByCategory);
+router.get('/total', expenseController.getTotalExpenses);
 router.get('/:id', expenseController.getExpenseById);
 router.put('/:id', expenseController.updateExpense);
 router.patch('/:id', expenseController.updateExpense);

@@ -63,10 +63,23 @@ async function writeAll(expenses) {
 async function getAll(category) {
   const expenses = await readAll();
   if (category) {
-    const targetCategory = category.trim().toLowerCase();
-    return expenses.filter(
-      (exp) => exp.category && exp.category.trim().toLowerCase() === targetCategory
-    );
+    if (typeof category === 'string') {
+      const targetCategory = category.trim().toLowerCase();
+      if (!targetCategory) return expenses;
+      return expenses.filter(
+        (exp) => exp.category && exp.category.trim().toLowerCase() === targetCategory
+      );
+    }
+    if (Array.isArray(category)) {
+      const targetCategories = category
+        .filter((c) => typeof c === 'string')
+        .map((c) => c.trim().toLowerCase())
+        .filter(Boolean);
+      if (targetCategories.length === 0) return expenses;
+      return expenses.filter(
+        (exp) => exp.category && targetCategories.includes(exp.category.trim().toLowerCase())
+      );
+    }
   }
   return expenses;
 }
@@ -144,10 +157,10 @@ async function updateById(id, updatePayload) {
     const current = expenses[index];
     const updated = {
       ...current,
-      title: updatePayload.title !== undefined ? updatePayload.title.trim() : current.title,
+      title: (updatePayload.title !== undefined && typeof updatePayload.title === 'string') ? updatePayload.title.trim() : current.title,
       amount: updatePayload.amount !== undefined ? Math.round(Number(updatePayload.amount) * 100) / 100 : current.amount,
-      category: updatePayload.category !== undefined ? updatePayload.category.trim() : current.category,
-      date: (updatePayload.date !== undefined && updatePayload.date !== null && updatePayload.date.trim() !== '') 
+      category: (updatePayload.category !== undefined && typeof updatePayload.category === 'string') ? updatePayload.category.trim() : current.category,
+      date: (updatePayload.date !== undefined && updatePayload.date !== null && typeof updatePayload.date === 'string' && updatePayload.date.trim() !== '') 
         ? updatePayload.date.trim() 
         : current.date
     };
